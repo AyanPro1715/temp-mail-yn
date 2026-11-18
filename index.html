@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>TempMail YN — Disposable Email</title>
+<meta name="theme-color" content="#0f172a">
+<style>
+:root {
+  --bg: #0f172a;
+  --bg2: #1e293b;
+  --card: #16213e;
+  --card2: #1c2b4a;
+  --border: #2b3b5c;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent2: #6366f1;
+  --green: #34d399;
+  --red: #f87171;
+  --yellow: #fbbf24;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100%;
+}
+.app { max-width: 640px; margin: 0 auto; min-height: 100vh; padding-bottom: 60px; }
+header {
+  position: sticky; top: 0; z-index: 20;
+  background: rgba(15,23,42,.92); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.logo {
+  width: 38px; height: 38px; border-radius: 12px; flex: none;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 18px; color: #0b1220;
+  box-shadow: 0 4px 14px rgba(56,189,248,.35);
+}
+.logo-text h1 { font-size: 17px; font-weight: 700; line-height: 1.1; }
+.logo-text small { color: var(--muted); font-size: 11px; }
+header .spacer { flex: 1; }
+.btn {
+  appearance: none; border: none; cursor: pointer;
+  font-family: inherit; font-weight: 600; font-size: 14px;
+  border-radius: 10px; padding: 10px 16px;
+  transition: transform .06s ease, opacity .15s ease;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #0b1220; }
+.btn-ghost { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
+.btn-danger { background: rgba(248,113,113,.12); color: var(--red); border: 1px solid rgba(248,113,113,.35); }
+.btn-sm { padding: 7px 12px; font-size: 13px; border-radius: 8px; }
+.btn:disabled { opacity: .5; cursor: default; }
+
+.screen { padding: 20px 16px; animation: fade .25s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; } }
+.hidden { display: none !important; }
+
+/* ---- Home / login screen ---- */
+.hero { text-align: center; padding: 26px 8px 14px; }
+.hero h2 { font-size: 24px; font-weight: 800; }
+.hero p { color: var(--muted); margin-top: 6px; font-size: 14px; line-height: 1.5; }
+.hero .grad { background: linear-gradient(135deg, var(--accent), var(--green)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 18px; margin-top: 16px;
+}
+.card h3 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 12px; }
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.field input {
+  width: 100%; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); padding: 12px 14px;
+  font-size: 15px; outline: none; font-family: inherit;
+}
+.field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(56,189,248,.15); }
+.row { display: flex; gap: 8px; }
+.row .grow { flex: 1; min-width: 0; }
+.divider { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 12px; margin: 16px 0; }
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.text-btn { background: none; border: none; color: var(--accent); font-size: 14px; font-weight: 600; cursor: pointer; padding: 8px 0; font-family: inherit; }
+.text-btn:hover { text-decoration: underline; }
+.hint { font-size: 12px; color: var(--muted); margin-top: 14px; text-align: center; line-height: 1.6; }
+.hint a { color: var(--accent); text-decoration: none; }
+.banner {
+  background: rgba(52,211,153,.1); border: 1px solid rgba(52,211,153,.4);
+  color: var(--green); border-radius: 12px; padding: 12px 14px;
+  font-size: 13px; margin-top: 12px; line-height: 1.5;
+}
+
+/* ---- Mailbox ---- */
+.mailbox-address {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px; margin-bottom: 14px;
+}
+.mailbox-address .addr {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 16px; font-weight: 700; word-break: break-all;
+}
+.mailbox-address .sub { color: var(--muted); font-size: 12px; margin-top: 6px; }
+.icon-btn {
+  flex: none; width: 34px; height: 34px; border-radius: 9px;
+  background: var(--card2); border: 1px solid var(--border);
+  color: var(--text); cursor: pointer; font-size: 15px;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: transform .06s ease;
+}
+.icon-btn:active { transform: scale(.92); }
+.toolbar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; }
+.toolbar .status { font-size: 12px; color: var(--muted); flex: 1; }
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(56,189,248,.12); border: 1px solid rgba(56,189,248,.35);
+  color: var(--accent); border-radius: 20px; padding: 4px 10px; font-size: 12px; font-weight: 600;
+}
+.badge.live { color: var(--green); background: rgba(52,211,153,.12); border-color: rgba(52,211,153,.4); }
+.badge.live .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 1.6s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+
+.empty {
+  text-align: center; padding: 44px 20px; color: var(--muted);
+  border: 2px dashed var(--border); border-radius: 16px;
+}
+.empty .icon { font-size: 42px; margin-bottom: 10px; }
+.empty p { font-size: 14px; line-height: 1.6; }
+
+.msg-list { display: flex; flex-direction: column; gap: 10px; }
+.msg-item {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px; cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.msg-item:hover { border-color: var(--accent); background: var(--card2); }
+.msg-item.unread { border-left: 3px solid var(--accent); }
+.msg-item .top { display: flex; align-items: center; gap: 8px; }
+.msg-item .from { font-weight: 700; font-size: 14px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msg-item .time { color: var(--muted); font-size: 12px; flex: none; }
+.msg-item .subject { font-size: 14px; color: var(--text); margin-top: 4px; font-weight: 600; }
+.msg-item .intro { font-size: 13px; color: var(--muted); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msg-item .tags { display: flex; gap: 6px; margin-top: 8px; }
+.tag { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: var(--card2); border: 1px solid var(--border); color: var(--muted); }
+.tag.attach { color: var(--yellow); border-color: rgba(251,191,36,.4); background: rgba(251,191,36,.08); }
+
+/* ---- Message detail ---- */
+.msg-detail { }
+.detail-head { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 14px; }
+.detail-head h2 { font-size: 18px; line-height: 1.35; word-break: break-word; }
+.meta { margin-top: 12px; font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
+.meta .k { color: var(--muted); }
+.meta .v { color: var(--text); word-break: break-all; }
+.body-box {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 18px;
+}
+.body-text { font-size: 14.5px; line-height: 1.65; white-space: pre-wrap; word-break: break-word; }
+.body-html { font-size: 14.5px; line-height: 1.65; word-break: break-word; overflow-x: auto; }
+.body-html img { max-width: 100%; height: auto; }
+.attach-list { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.attach-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 12px; font-size: 13px;
+}
+.attach-item .name { flex: 1; word-break: break-all; }
+.attach-item .size { color: var(--muted); flex: none; }.loading { text-align: center; padding: 30px; color: var(--muted); }
+.spinner {
+  width: 30px; height: 30px; border-radius: 50%; margin: 0 auto 12px;
+  border: 3px solid var(--border); border-top-color: var(--accent);
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.footer-note { text-align: center; color: var(--muted); font-size: 11px; padding: 16px; }
+.footer-note a { color: var(--muted); }
+.toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: #0b1220; color: var(--text); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 18px; font-size: 14px; z-index: 50;
+  box-shadow: 0 8px 30px rgba(0,0,0,.5); opacity: 0; pointer-events: none;
+  transition: opacity .25s ease, transform .25s ease; max-width: 90%;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.modal-back {
+  position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 40;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.modal {
+  background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+  padding: 20px; width: 100%; max-width: 400px;
+}
+.modal h3 { font-size: 16px; margin-bottom: 10px; }
+.modal p { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+.modal .row { margin-top: 16px; justify-content: flex-end; }
+.modal .row .btn { flex: 1; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ HEADER ============ -->
+  <header>
+    <div class="logo">✉</div>
+    <div class="logo-text">
+      <h1>TempMail YN</h1>
+      <small id="header-sub">Disposable email inbox</small>
+    </div>
+    <div class="spacer"></div>
+    <button id="btn-refresh" class="icon-btn" title="Refresh inbox">⟳</button>
+    <button id="btn-menu" class="icon-btn" title="Menu">⋮</button>
+  </header>
+
+  <!-- ============ HOME / LOGIN ============ -->
+  <div id="screen-home" class="screen">
+    <div class="hero">
+      <h2>Need a <span class="grad">temporary email?</span></h2>
+      <p>Create a disposable address in one tap. Receive emails instantly — no signup, no spam in your real inbox.</p>
+    </div>
+
+    <div class="card">
+      <h3>⚡ Generate new address</h3>
+      <div class="row">
+        <button id="btn-generate" class="btn btn-primary grow">Generate random address</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>✍️ Custom address</h3>
+      <div class="field">
+        <label>Choose your own prefix</label>
+        <div class="row">
+          <input id="inp-custom" class="grow" type="text" placeholder="e.g. john.doe" autocomplete="off" spellcheck="false">
+          <select id="sel-domain" class="grow" style="max-width:40%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:12px 10px;font-size:14px;outline:none;font-family:inherit;"></select>
+        </div>
+      </div>
+      <button id="btn-create-custom" class="btn btn-ghost" style="width:100%">Create this address</button>
+    </div>
+
+    <div class="divider">or</div>
+
+    <div class="card hidden" id="card-saved">
+      <h3>📁 Saved addresses</h3>
+      <div id="saved-list"></div>
+    </div>
+
+    <div class="card">
+      <h3>🔑 Use existing address</h3>
+      <div class="field">
+        <label>Email address</label>
+        <input id="inp-login-email" type="email" placeholder="you@example.com" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input id="inp-login-pass" type="password" placeholder="Password set when created">
+      </div>
+      <button id="btn-login" class="btn btn-ghost" style="width:100%">Sign in</button>
+    </div>
+
+    <p class="hint">Powered by <a href="https://mail.tm" target="_blank" rel="noopener">mail.tm</a> — free temporary email API.<br>Your address &amp; messages are stored temporarily and expire automatically.</p>
+  </div>
+
+  <!-- ============ MAILBOX ============ -->
+  <div id="screen-inbox" class="screen hidden">
+    <div class="mailbox-address">
+      <div class="addr">
+        <span id="inbox-address">—</span>
+        <button id="btn-copy" class="icon-btn" title="Copy address">⧉</button>
+      </div>
+      <div class="sub">
+        <span class="badge live"><span class="dot"></span> Listening</span>
+        <span id="inbox-count" style="margin-left:8px"></span>
+      </div>
+    </div>
+    <div id="inbox-list"></div>
+    <div id="inbox-empty" class="empty hidden">
+      <div class="icon">📭</div>
+      <p><strong>No messages yet</strong><br>This inbox checks for new mail every few seconds.<br>Send a test email to your address — it will appear here.</p>
+    </div>
+  </div>
+
+  <!-- ============ MESSAGE DETAIL ============ -->
+  <div id="screen-detail" class="screen hidden">
+    <button id="btn-back" class="btn btn-ghost btn-sm" style="margin-bottom:12px">← Back to inbox</button>
+    <div id="detail-content"></div>
+  </div>
+
+  <!-- ============ MENU MODAL ============ -->
+  <div id="modal" class="modal-back hidden">
+    <div class="modal" id="modal-box">
+      <h3 id="modal-title">Options</h3>
+      <p id="modal-text"></p>
+      <div class="row" id="modal-actions"></div>
+    </div>
+  </div>
+
+  <div class="footer-note">TempMail YN · <a href="https://mail.tm" target="_blank" rel="noopener">mail.tm</a> API</div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+"use strict";
+
+/* ================= API CONFIG ================= */
+const API = "https://api.mail.tm";
+
+/* ================= STATE ================= */
+const state = {
+  token: localStorage.getItem("tm_token") || "",
+  account: JSON.parse(localStorage.getItem("tm_account") || "null"),
+  domain: localStorage.getItem("tm_domain") || "",
+  polling: null,
+  currentMessages: [],
+  detailMessage: null,
+};
+/* ================= DOM HELPERS ================= */
+const $ = (id) => document.getElementById(id);
+const screens = { home: $("screen-home"), inbox: $("screen-inbox"), detail: $("screen-detail") };
+
+function showScreen(name) {
+  Object.entries(screens).forEach(([k, el]) => el.classList.toggle("hidden", k !== name));
+}
+
+let toastTimer = null;
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+function relTime(iso) {
+  const then = new Date(iso).getTime();
+  if (isNaN(then)) return "";
+  const diff = Date.now() - then;
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + "m ago";
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + "h ago";
+  const d = Math.floor(h / 24);
+  if (d < 7) return d + "d ago";
+  return new Date(iso).toLocaleDateString();
+}
+
+function fmtSize(bytes) {
+  if (!bytes && bytes !== 0) return "";
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / 1048576).toFixed(1) + " MB";
+}
+
+/* ================= API CALLS ================= */
+async function api(path, opts = {}) {
+  const headers = { "Content-Type": "application/json", ...(opts.headers || {}) };
+  if (state.token && !opts.noAuth) headers["Authorization"] = "Bearer " + state.token;
+  const res = await fetch(API + path, { ...opts, headers });
+  if (res.status === 204) return null;
+  let data = null;
+  try { data = await res.json(); } catch (e) { /* no body */ }
+  if (!res.ok) {
+    const detail = data && (data["hydra:description"] || data.detail || data.message || data.violations);
+    throw new Error(detail || "API error " + res.status);
+  }
+  return data;
+}
+
+async function fetchDomains() {
+  const data = await api("/domains");
+  const list = (data["hydra:member"] || []).filter(d => d.isActive);
+  return list;
+}
+
+async function createAccount(address, password) {
+  await api("/accounts", { method: "POST", body: JSON.stringify({ address, password }) });
+}
+
+async function getToken(address, password) {
+  const data = await api("/token", { method: "POST", noAuth: true, body: JSON.stringify({ address, password }) });
+  return data.token;
+}
+
+async function me() {
+  return await api("/me");
+}
+
+async function listMessages() {
+  const data = await api("/messages");
+  return data["hydra:member"] || [];
+}
+
+async function getMessage(id) {
+  return await api("/messages/" + id);
+}
+
+async function markSeen(id) {
+  return await api("/messages/" + id, { method: "PATCH" });
+}
+
+async function deleteMessage(id) {
+  return await api("/messages/" + id, { method: "DELETE" });
+}
+
+async function deleteAccount(id) {
+  return await api("/accounts/" + id, { method: "DELETE" });
+}
+
+/* ================= SESSION ================= */
+function saveSession(token, account, domain, password) {
+  state.token = token; state.account = account; state.domain = domain || state.domain;
+  localStorage.setItem("tm_token", token);
+  localStorage.setItem("tm_account", JSON.stringify(account));
+  if (domain) localStorage.setItem("tm_domain", domain);
+  rememberAccount(account, password);
+}
+
+/* ---------- Saved addresses (so a generated password isn't lost) ---------- */
+function getSaved() {
+  try { return JSON.parse(localStorage.getItem("tm_saved") || "[]"); } catch (e) { return []; }
+}
+function rememberAccount(account, password) {
+  if (!account || !account.address) return;
+  const existing = getSaved().find(a => a.address.toLowerCase() === account.address.toLowerCase());
+  const list = getSaved().filter(a => a.address.toLowerCase() !== account.address.toLowerCase());
+  list.unshift({ address: account.address, password: password || (existing ? existing.password : "") });
+  localStorage.setItem("tm_saved", JSON.stringify(list.slice(0, 8)));
+  renderSaved();
+}
+function forgetAccount(address) {
+  localStorage.setItem("tm_saved", JSON.stringify(getSaved().filter(a => a.address.toLowerCase() !== address.toLowerCase())));
+  renderSaved();
+}
+function renderSaved() {
+  const card = $("card-saved"), list = $("saved-list");
+  if (!card) return;
+  const saved = getSaved();
+  card.classList.toggle("hidden", saved.length === 0);
+  if (!saved.length) { list.innerHTML = ""; return; }
+  list.innerHTML = saved.map((s, i) => `
+    <div class="row" style="margin-bottom:8px;align-items:center">
+      <span class="grow" style="font-size:13px;word-break:break-all">${esc(s.address)}</span>
+      <button class="btn btn-ghost btn-sm" data-open="${i}">Open</button>
+      <button class="icon-btn" data-forget="${i}" title="Remove">✕</button>
+    </div>`).join("");
+  list.querySelectorAll("[data-open]").forEach(b => b.addEventListener("click", () => {
+    const s = getSaved()[+b.dataset.open];
+    if (!s) return;
+    $("inp-login-email").value = s.address;
+    $("inp-login-pass").value = s.password || "";
+    if (!s.password) toast("No saved password — create a new address instead");
+  }));
+  list.querySelectorAll("[data-forget]").forEach(b => b.addEventListener("click", () => {
+    const s = getSaved()[+b.dataset.forget];
+    if (s) forgetAccount(s.address);
+  }));
+}
+
+function clearSession() {
+  state.token = ""; state.account = null;
+  localStorage.removeItem("tm_token");
+  localStorage.removeItem("tm_account");
+  stopPolling();
+}
+
+function generatePassword(len = 12) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let out = "";
+  const arr = crypto.getRandomValues(new Uint32Array(len));
+  for (let i = 0; i < len; i++) out += chars[arr[i] % chars.length];
+  return out;
+}
+
+function generatePrefix() {
+  const words = ["snake","tiger","eagle","wolf","fox","panda","koala","zebra","lion","bear","deer","hawk","owl","crab","frog","otter","puma","lynx","ibis","apex","nova","echo","zen"];
+  const r = (n) => Math.floor(Math.random() * n);
+  const word = words[r(words.length)];
+  return word + "." + Math.floor(100 + Math.random() * 900);
+}
+
+/* ================= FLOW: CREATE / LOGIN ================= */
+async function enterInbox(token, account, domain, password) {
+  saveSession(token, account, domain, password);
+  $("inbox-address").textContent = account.address;
+  showScreen("inbox");
+  await refreshInbox();
+  startPolling();
+}
+
+async function doCreate(address, password, btn) {
+  setBusy(btn, true, "Creating…");
+  try {
+    await createAccount(address, password);
+    const token = await getToken(address, password);
+    const account = await me();
+    await enterInbox(token, account, state.domain, password);
+    toast("Address created ✓");
+  } catch (e) {
+    toast("Failed: " + e.message);
+  } finally {
+    setBusy(btn, false);
+  }
+}
+
+async function doLogin(address, password) {
+  const btn = $("btn-login");
+  setBusy(btn, true, "Signing in…");
+  try {
+    const token = await getToken(address, password);
+    const account = await me();
+    await enterInbox(token, account, state.domain, password);
+    toast("Signed in ✓");
+  } catch (e) {
+    toast("Sign in failed: " + e.message);
+  } finally {
+    setBusy(btn, false);
+  }
+}
+
+function setBusy(btn, busy, label) {
+  if (!btn) return;
+  if (busy) {
+    if (!btn.dataset.orig) btn.dataset.orig = btn.textContent;
+    btn.disabled = true; btn.textContent = label;
+  } else {
+    btn.disabled = false;
+    btn.textContent = btn.dataset.orig || btn.textContent;
+  }
+}
+
+/* ================= INBOX ================= */
+async function refreshInbox(opts = {}) {
+  if (!state.token) return;
+  const status = $("inbox-count");
+  if (status && !opts.quiet) status.textContent = "refreshing…";
+  try {
+    const msgs = await listMessages();
+    const prevIds = new Set(state.currentMessages.map(m => m.id));
+    const fresh = msgs.filter(m => !prevIds.has(m.id));
+    state.currentMessages = msgs;
+    renderInbox(msgs);
+    // alert only on background polls, not on the first load
+    if (opts.quiet && fresh.length && prevIds.size) {
+      toast(fresh.length === 1 ? "New message received ✉" : fresh.length + " new messages received ✉");
+    }
+  } catch (e) {
+    if (status) status.textContent = "";
+    if (!opts.quiet) toast("Could not load inbox: " + e.message);
+  }
+}
+
+function renderInbox(msgs) {
+  const listEl = $("inbox-list");
+  const emptyEl = $("inbox-empty");
+  $("inbox-count").textContent = msgs.length ? msgs.length + (msgs.length === 1 ? " message" : " messages") : "";
+  listEl.innerHTML = "";
+  emptyEl.classList.toggle("hidden", msgs.length > 0);
+  listEl.classList.toggle("hidden", msgs.length === 0);
+
+  if (msgs.length === 0) return;
+
+  const frag = document.createDocumentFragment();
+  [...msgs].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).forEach(m => {
+    const item = document.createElement("div");
+    const from = m.from || {};
+    item.className = "msg-item" + (m.seen ? "" : " unread");
+    item.innerHTML = `
+      <div class="top">
+        <span class="from">${esc(from.name || from.address || "Unknown")}</span>
+        <span class="time">${relTime(m.createdAt)}</span>
+      </div>
+      <div class="subject">${esc(m.subject || "(no subject)")}</div>
+      <div class="intro">${esc(m.intro || "")}</div>
+      <div class="tags">
+        <span class="tag">${esc(from.address || "")}</span>
+        ${m.hasAttachments ? '<span class="tag attach">📎 attachment</span>' : ""}
+      </div>`;
+    item.addEventListener("click", () => openMessage(m.id));
+    frag.appendChild(item);
+  });
+  listEl.appendChild(frag);
+}
+
+function esc(s) {
+  const d = document.createElement("div");
+  d.textContent = s == null ? "" : String(s);
+  return d.innerHTML;
+}
+
+/* ================= MESSAGE DETAIL ================= */
+async function openMessage(id) {
+  showScreen("detail");
+  $("detail-content").innerHTML = `<div class="loading"><div class="spinner"></div>Loading message…</div>`;
+  try {
+    const m = await getMessage(id);
+    state.detailMessage = m;
+    if (!m.seen) { markSeen(id).catch(() => {}); }
+    renderDetail(m);
+    // update unread state in the list
+    state.currentMessages.forEach(x => { if (x.id === id) x.seen = true; });
+    renderInbox(state.currentMessages);
+  } catch (e) {
+    $("detail-content").innerHTML = `<div class="empty"><p>Could not load message: ${esc(e.message)}</p></div>`;
+  }
+}
+
+function renderDetail(m) {
+  const from = m.from ? (m.from.name ? m.from.name + " <" + m.from.address + ">" : m.from.address) : "Unknown";
+  const to = (m.to || []).map(t => t.address).join(", ");
+  let body = "";
+  if (m.text) {
+    body = `<div class="body-text">${esc(m.text)}</div>`;
+  } else if (m.html && m.html.length) {
+    body = `<div class="body-html">${sanitizeHtml(m.html.join(""))}</div>`;
+  } else {
+    body = `<div class="body-text">(No text content in this message)</div>`;
+  }
+  let attachments = "";
+  if (m.attachments && m.attachments.length) {
+    attachments = `<div class="attach-list">` + m.attachments.map((a, i) => `
+      <div class="attach-item">
+        <span class="name">📎 ${esc(a.filename)}</span>
+        <span class="size">${fmtSize(a.size)}</span>
+        <button class="btn btn-ghost btn-sm" id="att-${i}">Save</button>
+      </div>`).join("") + `</div>`;
+  }
+  $("detail-content").innerHTML = `
+    <div class="detail-head">
+      <h2>${esc(m.subject || "(no subject)")}</h2>
+      <div class="meta">
+        <div><span class="k">From: </span><span class="v">${esc(from)}</span></div>
+        <div><span class="k">To: </span><span class="v">${esc(to)}</span></div>
+        <div><span class="k">Date: </span><span class="v">${new Date(m.createdAt).toLocaleString()}</span></div>
+      </div>
+    </div>
+    <div class="body-box">${body}${attachments}</div>
+    <div style="margin-top:14px"><button id="btn-del-msg" class="btn btn-danger" style="width:100%">🗑 Delete this message</button></div>`;
+
+  $("btn-del-msg").addEventListener("click", async () => {
+    try {
+      await deleteMessage(m.id);
+      state.currentMessages = state.currentMessages.filter(x => x.id !== m.id);
+      renderInbox(state.currentMessages);
+      toast("Message deleted");
+      showScreen("inbox");
+    } catch (e) {
+      toast("Delete failed: " + e.message);
+    }
+  });
+
+  // wire up attachment download buttons
+  (m.attachments || []).forEach((a, i) => {
+    const btn = $("att-" + i);
+    if (btn) btn.addEventListener("click", () => downloadAttachment(a, m));
+  });
+}
+
+/* ---------- Attachment download ---------- */
+async function downloadAttachment(att, msg) {
+  // Prefer the attachment's own downloadUrl, fall back to the message endpoint.
+  let url;
+  if (att.downloadUrl) {
+    url = att.downloadUrl.startsWith("http") ? att.downloadUrl : API + att.downloadUrl;
+  } else {
+    url = API + "/messages/" + (msg ? msg.id : state.detailMessage.id) + "/attachment/" + att.id;
+  }
+  try {
+    const res = await fetch(url, { headers: { "Authorization": "Bearer " + state.token } });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const blob = await res.blob();
+    const dlUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = dlUrl; a.download = att.filename || "attachment";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(dlUrl), 4000);
+  } catch (e) {
+    toast("Download failed: " + e.message);
+  }
+}
+
+/* ---------- HTML sanitizer: strip scripts/styles/event handlers ---------- */
+function sanitizeHtml(html) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  doc.querySelectorAll("script, style, iframe, object, embed, link, meta, form, input, button, textarea, select").forEach(n => n.remove());
+  doc.querySelectorAll("*").forEach(n => {
+    [...n.attributes].forEach(attr => {
+      const name = attr.name.toLowerCase();
+      if (name.startsWith("on") || (name === "href" && attr.value.trim().toLowerCase().startsWith("javascript:"))) {
+        n.removeAttribute(attr.name);
+      }
+    });
+  });
+  doc.querySelectorAll("a").forEach(a => { a.target = "_blank"; a.rel = "noopener noreferrer"; });
+  return doc.body.innerHTML;
+}
+
+/* ================= POLLING ================= */
+function startPolling() {
+  stopPolling();
+  state.polling = setInterval(() => {
+    refreshInbox({ quiet: true }).catch(() => {});
+  }, 5000);
+}
+function stopPolling() {
+  if (state.polling) { clearInterval(state.polling); state.polling = null; }
+}
+
+/* ================= MENU ================= */
+function openMenu() {
+  const box = $("modal-box");
+  $("modal-title").textContent = "Menu";
+  $("modal-text").innerHTML = state.account
+    ? `<strong>${esc(state.account.address)}</strong><br>Created: ${new Date(state.account.createdAt).toLocaleString()}`
+    : "Signed out.";
+  $("modal-actions").innerHTML = `
+    <button class="btn btn-ghost" id="m-close">Close</button>
+    ${state.account ? `<button class="btn btn-danger" id="m-logout">Sign out</button>` : ""}
+    ${state.account ? `<button class="btn btn-danger" id="m-delete">Delete account</button>` : ""}`;
+  $("modal").classList.remove("hidden");
+  $("m-close").addEventListener("click", closeModal);
+  const lo = $("m-logout"), del = $("m-delete");
+  if (lo) lo.addEventListener("click", () => { closeModal(); doSignOut(false); });
+  if (del) del.addEventListener("click", () => { closeModal(); confirmDeleteAccount(); });
+}
+function closeModal() { $("modal").classList.add("hidden"); }
+
+function doSignOut(showToastMsg = true) {
+  stopPolling();
+  clearSession();
+  $("inbox-list").innerHTML = "";
+  $("inbox-address").textContent = "—";
+  $("inbox-count").textContent = "";
+  showScreen("home");
+  if (showToastMsg) toast("Signed out");
+}
+
+async function confirmDeleteAccount() {
+  if (!confirm("This permanently deletes your account and all its messages. Continue?")) return;
+  try {
+    const id = state.account.id;
+    await deleteAccount(id);
+    toast("Account deleted");
+    doSignOut(false);
+  } catch (e) {
+    toast("Delete failed: " + e.message);
+  }
+}
+
+/* ================= EVENTS ================= */
+$("btn-refresh").addEventListener("click", () => refreshInbox());
+
+$("btn-menu").addEventListener("click", openMenu);
+
+$("btn-generate").addEventListener("click", async () => {
+  const btn = $("btn-generate");
+  if (btn.disabled) return;
+  if (!state.domain) { toast("Still loading domains — try again in a second"); return; }
+  const address = generatePrefix() + "@" + state.domain;
+  const password = generatePassword();
+  await doCreate(address, password, btn);
+});
+
+$("btn-create-custom").addEventListener("click", async () => {
+  const btn = $("btn-create-custom");
+  if (btn.disabled) return;
+  if (!state.domain) { toast("Still loading domains — try again in a second"); return; }
+  const prefix = $("inp-custom").value.trim().toLowerCase();
+  if (!prefix) { toast("Enter a prefix first"); return; }
+  const clean = prefix.replace(/[^a-z0-9._-]/g, "");
+  if (!clean) { toast("Prefix can only contain letters, numbers, dots, dashes"); return; }
+  const address = clean + "@" + state.domain;
+  const password = generatePassword();
+  await doCreate(address, password, btn);
+  if (state.account) $("inp-custom").value = "";
+});
+
+$("btn-login").addEventListener("click", () => {
+  const email = $("inp-login-email").value.trim();
+  const pass = $("inp-login-pass").value;
+  if (!email || !pass) { toast("Enter email and password"); return; }
+  doLogin(email, pass);
+});
+
+$("btn-copy").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(state.account.address);
+    toast("Address copied ✓");
+  } catch (e) {
+    // fallback for non-https / older browsers
+    const ta = document.createElement("textarea");
+    ta.value = state.account.address;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); toast("Address copied ✓"); }
+    catch (e2) { toast("Could not copy: " + e2.message); }
+    ta.remove();
+  }
+});
+
+$("btn-back").addEventListener("click", () => showScreen("inbox"));
+
+/* Enter key on inputs */
+$("inp-login-pass").addEventListener("keydown", (e) => { if (e.key === "Enter") $("btn-login").click(); });
+$("inp-custom").addEventListener("keydown", (e) => { if (e.key === "Enter") $("btn-create-custom").click(); });
+
+/* ================= INIT ================= */
+(async function init() {
+  renderSaved();
+
+  // Load available domains
+  const sel = $("sel-domain");
+  try {
+    const domains = await fetchDomains();
+    domains.forEach(d => {
+      const opt = document.createElement("option");
+      opt.value = d.domain;
+      opt.textContent = "@" + d.domain;
+      sel.appendChild(opt);
+    });
+    if (domains.length) {
+      const stored = localStorage.getItem("tm_domain");
+      if (stored && domains.some(d => d.domain === stored)) sel.value = stored;
+      state.domain = sel.value;
+    }
+  } catch (e) {
+    console.warn("Could not fetch domains:", e);
+  }
+
+  sel.addEventListener("change", () => { state.domain = sel.value; localStorage.setItem("tm_domain", sel.value); });
+
+  // Restore session
+  if (state.token && state.account) {
+    try {
+      const account = await me(); // validates token
+      state.account = account;
+      localStorage.setItem("tm_account", JSON.stringify(account));
+      $("inbox-address").textContent = account.address;
+      showScreen("inbox");
+      await refreshInbox();
+      startPolling();
+      return;
+    } catch (e) {
+      clearSession();
+    }
+  }
+  showScreen("home");
+})();
+</script>
+</body>
+</html>
