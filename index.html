@@ -366,7 +366,11 @@ async function api(path, opts = {}) {
   let data = null;
   try { data = await res.json(); } catch (e) { /* no body */ }
   if (!res.ok) {
-    const detail = data && (data["hydra:description"] || data.detail || data.message || data.violations);
+    let detail = data && (data["hydra:description"] || data.detail || data.message);
+    if (!detail && data && Array.isArray(data.violations) && data.violations.length) {
+      detail = data.violations.map(v => v.message || v.propertyPath).filter(Boolean).join("; ");
+    }
+    if (!detail && res.status === 429) detail = "Too many requests — wait a few seconds and retry";
     throw new Error(detail || "API error " + res.status);
   }
   return data;
@@ -401,7 +405,7 @@ async function getMessage(id) {
 }
 
 async function markSeen(id) {
-  return await api("/messages/" + id, { method: "PATCH" });
+  return await api("/messages/" + id, { method: "PATCH", body: JSON.stringify({ seen: true }) });
 }
 
 async function deleteMessage(id) {
