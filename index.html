@@ -317,6 +317,10 @@ header .spacer { flex: 1; }
 
 /* ================= API CONFIG ================= */
 const API = "https://api.mail.tm";
+/* Last known-good domain, used when /domains is rate-limited or unreachable.
+   mail.tm allows 10 req/min per IP and mobile carriers NAT thousands of users
+   behind one IP, so the domain list is often the first thing to return 429. */
+const FALLBACK_DOMAINS = ["euploading.com"];
 
 /* ================= STATE ================= */
 const state = {
@@ -548,7 +552,6 @@ async function doCreate(address, password, btn) {
     setBusy(btn, false);
   }
 }
-
 async function doLogin(address, password) {
   const btn = $("btn-login");
   setBusy(btn, true, "Signing in…");
@@ -909,14 +912,11 @@ async function loadDomains() {
     // so the app still works instead of showing an empty dropdown.
     let cached = [];
     try { cached = JSON.parse(localStorage.getItem("tm_domains") || "[]"); } catch (err) {}
+    if (!Array.isArray(cached) || !cached.length) cached = FALLBACK_DOMAINS.slice();
     cached = cached.map(d => ({ domain: d, isActive: true }));
-    if (cached.length) {
-      applyDomains(cached);
-      setApiStatus("Offline — using last known domain @" + cached[0].domain + ". Tap to retry.", true);
-      return true;
-    }
-    setApiStatus("Can't reach mail.tm — " + e.message + " · tap here to retry", true);
-    return false;
+    applyDomains(cached);
+    setApiStatus("Can't fetch domains right now (" + e.message + ") — using @" + cached[0].domain + ". Tap to retry.", true);
+    return true;
   }
 }
 
@@ -925,7 +925,8 @@ async function loadDomains() {
 
   const statusEl = $("api-status");
   if (statusEl) statusEl.addEventListener("click", () => {
-    if (!$("btn-generate").disabled) return;
+    // always allow a manual retry — this is the recovery path when the API
+    // was rate-limited on first load
     loadDomains();
   });
 
