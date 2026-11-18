@@ -877,11 +877,8 @@ async function loadDomains() {
   const sel = $("sel-domain");
   const genBtn = $("btn-generate");
   const createBtn = $("btn-create-custom");
-  setApiStatus("Loading mail domains…", false);
-  if (genBtn) genBtn.disabled = true;
-  if (createBtn) createBtn.disabled = true;
-  try {
-    const domains = await fetchDomains();
+
+  const applyDomains = (domains) => {
     sel.innerHTML = "";
     domains.forEach(d => {
       const opt = document.createElement("option");
@@ -892,12 +889,32 @@ async function loadDomains() {
     const stored = localStorage.getItem("tm_domain");
     if (stored && domains.some(d => d.domain === stored)) sel.value = stored;
     state.domain = sel.value;
-    setApiStatus("Connected — ready to create an address", false);
-    setTimeout(() => setApiStatus("", false), 2500);
     if (genBtn) genBtn.disabled = false;
     if (createBtn) createBtn.disabled = false;
+  };
+
+  setApiStatus("Loading mail domains…", false);
+  if (genBtn) genBtn.disabled = true;
+  if (createBtn) createBtn.disabled = true;
+
+  try {
+    const domains = await fetchDomains();
+    applyDomains(domains);
+    try { localStorage.setItem("tm_domains", JSON.stringify(domains.map(d => d.domain))); } catch (e) {}
+    setApiStatus("Connected — ready to create an address", false);
+    setTimeout(() => setApiStatus("", false), 2500);
     return true;
   } catch (e) {
+    // Offline / rate-limited / blocked: fall back to the last domain list we saw
+    // so the app still works instead of showing an empty dropdown.
+    let cached = [];
+    try { cached = JSON.parse(localStorage.getItem("tm_domains") || "[]"); } catch (err) {}
+    cached = cached.map(d => ({ domain: d, isActive: true }));
+    if (cached.length) {
+      applyDomains(cached);
+      setApiStatus("Offline — using last known domain @" + cached[0].domain + ". Tap to retry.", true);
+      return true;
+    }
     setApiStatus("Can't reach mail.tm — " + e.message + " · tap here to retry", true);
     return false;
   }
